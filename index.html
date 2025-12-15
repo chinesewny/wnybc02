@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ภาษาจีนเพื่องานบริการ: บทที่ 2 บริการต้อนรับส่วนหน้า</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"IBM Plex Sans Thai"', 'sans-serif'],
+                        chinese: ['"Noto Sans SC"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                    },
+                    colors: {
+                        hotel: {
+                            gold: '#C5A059',
+                            goldlight: '#F3EAD3',
+                            navy: '#1E293B',
+                            navylight: '#334155',
+                            cream: '#FDFBF7',
+                            accent: '#0F766E'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'card': '0 10px 40px -10px rgba(0, 0, 0, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #F8FAFC; }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hidden-section { display: none !important; }
+        .active-section { display: flex !important; }
+
+        /* Chat Bubbles */
+        .chat-container {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .bubble-enter {
+            animation: bubblePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            transform: scale(0.9) translateY(10px);
+        }
+
+        @keyframes bubblePop {
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Flip Card Logic (Click Only) */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        
+        .flip-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Ensure NO hover effect triggers the flip. Only the .flipped class. */
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+        /* Score Circle Animation */
+        .score-circle {
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+
+        .hidden { display: none !important; }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="h-[100dvh] flex text-slate-800 antialiased overflow-hidden selection:bg-hotel-gold selection:text-white">
+
+    <aside class="w-20 lg:w-72 bg-hotel-navy text-white flex-shrink-0 flex flex-col z-30 shadow-2xl transition-all duration-300">
+        <div class="h-auto py-6 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-700/50 bg-[#16202E]">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-hotel-gold to-yellow-600 flex items-center justify-center shadow-lg shadow-orange-900/20 flex-shrink-0">
+                <i data-lucide="crown" class="w-6 h-6 text-white"></i>
+            </div>
+            <div class="ml-3 hidden lg:block">
+                <h1 class="font-sans text-sm font-bold tracking-wide text-hotel-gold leading-tight">วิชาภาษาจีนเพื่องานบริการ 2<br><span class="text-white text-xs font-normal">(การโรงแรม)</span></h1>
+            </div>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <button onclick="switchTab('dashboard')" class="nav-btn group w-full flex items-center p-3 lg:px-4 rounded-xl transition-all duration-200 text-slate-300 hover:bg-white/5 hover:text-white" id="btn-dashboard">
+                <i data-lucide="layout-grid" class="w-6 h-6 lg:w-5 lg:h-5 transition-transform group-hover:scale-110"></i>
+                <span class="ml-3 hidden lg:block font-medium">หน้าหลัก (Dashboard)</span>
+            </button>
+
+            <button onclick="switchTab('foundation')" class="nav-btn group w-full flex items-center p-3 lg:px-4 rounded-xl transition-all duration-200 text-slate-300 hover:bg-white/5 hover:text-white" id="btn-foundation">
+                <i data-lucide="book-open-check" class="w-6 h-6 lg:w-5 lg:h-5 transition-transform group-hover:scale-110"></i>
+                <span class="ml-3 hidden lg:block font-medium">รูปประโยค (Sentences)</span>
+            </button>
+
+            <div class="hidden lg:block px-4 mt-6 mb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">บทสนทนา (Dialogues)</div>
+            
+            <button onclick="switchTab('booking')" class="nav-btn group w-full flex items-center p-3 lg:px-4 rounded-xl transition-all duration-200 text-slate-300 hover:bg-white/5 hover:text-white" id="btn-booking">
+                <i data-lucide="phone" class="w-6 h-6 lg:w-5 lg:h-5 transition-transform group-hover:scale-110"></i>
+                <span class="ml-3 hidden lg:block font-medium">1. การจองห้องพัก</span>
+            </button>
+            
+            <button onclick="switchTab('checkin')" class="nav-btn group w-full flex items-center p-3 lg:px-4 rounded-xl transition-all duration-200 text-slate-300 hover:bg-white/5 hover:text-white" id="btn-checkin">
+                <i data-lucide="user-check" class="w-6 h-6 lg:w-5 lg:h-5 transition-transform group-hover:scale-110"></i>
+                <span class="ml-3 hidden lg:block font-medium">2. ลงทะเบียนเข้าพัก</span>
+            </button>
+            
+            <button onclick="switchTab('checkout')" class="nav-btn group w-full flex items-center p-3 lg:px-4 rounded-xl transition-all duration-200 text-slate-300 hover:bg-white/5 hover:text-white" id="btn-checkout">
+                <i data-lucide="credit-card" class="w-6 h-6 lg:w-5 lg:h-5 transition-transform group-hover:scale-110"></i>
+                <span class="ml-3 hidden lg:block font-medium">3. การเช็คเอาท์</span>
+            </button>
+
+            <div class="hidden lg:block px-4 mt-6 mb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Evaluation</div>
+            
+            <button onclick="switchTab('quiz')" class="nav-btn group w-full flex items-center p-3 lg:px-4 rounded-xl transition-all duration-200 text-slate-300 hover:bg-white/5 hover:text-white" id="btn-quiz">
+                <i data-lucide="graduation-cap" class="w-6 h-6 lg:w-5 lg:h-5 transition-transform group-hover:scale-110"></i>
+                <span class="ml-3 hidden lg:block font-medium">แบบฝึกหัด (Quiz)</span>
+            </button>
+        </nav>
+    </aside>
+
+    <main class="flex-1 h-full relative flex flex-col overflow-hidden bg-hotel-cream/50">
+        
+        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 lg:hidden flex items-center justify-between p-4 z-20 sticky top-0">
+            <span class="font-serif font-bold text-sm text-hotel-navy">วิชาภาษาจีนเพื่องานบริการ 2</span>
+            <span class="text-xs font-bold bg-hotel-gold text-white px-3 py-1 rounded-full shadow-sm">บทที่ 2</span>
+        </header>
+
+        <section id="dashboard" class="active-section flex-col p-6 lg:p-12 max-w-7xl mx-auto w-full overflow-y-auto fade-in">
+            <div class="mb-10 text-center lg:text-left">
+                <h2 class="font-chinese text-4xl lg:text-5xl font-bold text-hotel-navy mb-3">第二课 前台服务</h2>
+                <p class="text-slate-500 text-lg font-light">บทที่ 2 บริการต้อนรับส่วนหน้า (Front Office Service)</p>
+                <div class="mt-4 p-4 bg-white rounded-xl shadow-sm border border-slate-100 max-w-2xl">
+                    <h3 class="font-bold text-hotel-navy mb-2"><i data-lucide="info" class="w-4 h-4 inline mr-1"></i> เนื้อหาในบทนี้ (Lesson Overview)</h3>
+                    <p class="text-sm text-slate-600">
+                        ในบทเรียนนี้ นักเรียนจะได้เรียนรู้คำศัพท์และบทสนทนาที่จำเป็นสำหรับพนักงานต้อนรับส่วนหน้า (Front Office) 
+                        ครอบคลุมตั้งแต่ขั้นตอน <b>การรับจองห้องพักทางโทรศัพท์</b>, <b>การลงทะเบียนเข้าพัก (Check-in)</b> 
+                        ไปจนถึง <b>การเช็คเอาท์และชำระเงิน (Check-out)</b> โดยเน้นทักษะการฟังและพูดโต้ตอบอย่างเป็นธรรมชาติ
+                    </p>
+                </div>
+            </div>
+
+            <div class="relative w-full h-80 rounded-3xl overflow-hidden shadow-card group cursor-pointer mb-12" onclick="switchTab('foundation')">
+                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" 
+                     alt="Hotel Reception" 
+                     class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 filter brightness-[0.6]">
+                
+                <div class="absolute inset-0 bg-gradient-to-t from-hotel-navy/90 via-hotel-navy/40 to-transparent flex flex-col justify-end p-8 lg:p-12">
+                    <div class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                        <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold rounded-full mb-4 uppercase tracking-wider">Chapter 02</span>
+                        <h1 class="font-chinese text-4xl lg:text-6xl font-bold text-white mb-2 tracking-wide">前台服务</h1>
+                        <p class="font-serif text-2xl text-hotel-gold italic mb-6">Qiántái fúwù - Front Office Service</p>
+                        
+                        <div class="flex items-center gap-2 text-white/90 text-sm font-medium">
+                            <div class="w-10 h-10 rounded-full bg-hotel-gold flex items-center justify-center text-white shadow-lg">
+                                <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                            </div>
+                            <span class="ml-2">เริ่มเรียนทันที (Start Learning)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="foundation" class="hidden-section flex-col p-6 lg:p-12 max-w-7xl mx-auto w-full overflow-y-auto fade-in">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+                <div>
+                    <h2 class="font-serif text-3xl font-bold text-hotel-navy">常用句型 (รูปประโยค)</h2>
+                    <p class="text-slate-500 mt-2">คลิกที่การ์ดเพื่อดูคำแปล / กดปุ่มลำโพงเพื่อฟังเสียง</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="foundation-container">
+                </div>
+        </section>
+
+        <section id="booking" class="hidden-section flex-col lg:flex-row h-full w-full bg-[#F1F5F9] overflow-hidden fade-in">
+            <div class="w-full lg:w-80 bg-white border-r border-slate-200 flex flex-col z-10 flex-shrink-0 h-[35%] lg:h-full shadow-lg">
+                <div class="p-6 border-b border-slate-100 bg-white">
+                    <h3 class="font-bold text-hotel-navy flex items-center gap-2 text-lg">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <i data-lucide="book-open" class="w-4 h-4"></i>
+                        </div>
+                        คำศัพท์ (Vocabulary)
+                    </h3>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-4" id="vocab-booking">
+                    </div>
+            </div>
+
+            <div class="flex-1 flex flex-col h-[65%] lg:h-full relative chat-container">
+                <div class="bg-white/90 backdrop-blur px-6 py-4 border-b border-slate-200 shadow-sm flex justify-between items-center z-20">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                            <i data-lucide="phone" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-lg text-hotel-navy leading-tight">1. การจองห้องพัก</h2>
+                            <p class="text-xs text-slate-500">Telephone Reservation</p>
+                        </div>
+                    </div>
+                    <button onclick="resetDialogue('booking')" class="text-sm font-medium text-slate-400 hover:text-hotel-gold flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-50">
+                        <i data-lucide="rotate-cw" class="w-4 h-4"></i> เริ่มใหม่
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto p-6 lg:p-10 scroll-smooth space-y-6" id="chat-booking">
+                    <div id="start-booking" class="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
+                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-soft mb-2">
+                            <i data-lucide="message-square-dashed" class="w-10 h-10 text-slate-300"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="font-medium text-slate-600">เริ่มบทสนทนา</p>
+                            <p class="text-sm">กด Play เพื่อฟังเสียงพนักงาน (หญิง) และลูกค้า (ชาย)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 lg:px-8 lg:py-5 border-t border-slate-200 flex justify-center items-center gap-4 shadow-[0_-4px_20px_-2px_rgba(0,0,0,0.05)]">
+                    <button onclick="playNextStep('booking')" class="flex items-center gap-2 bg-white border border-slate-200 hover:border-blue-500 hover:text-blue-600 text-slate-600 px-6 py-3 rounded-xl font-bold transition-all shadow-sm active:scale-95 w-full lg:w-auto justify-center">
+                        <i data-lucide="skip-forward" class="w-5 h-5"></i><span>ถัดไป</span>
+                    </button>
+                    <button onclick="playAuto('booking')" id="btn-auto-booking" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 active:scale-95 w-full lg:w-auto justify-center">
+                        <i data-lucide="play" class="w-5 h-5 fill-current"></i><span>เล่นอัตโนมัติ</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="checkin" class="hidden-section flex-col lg:flex-row h-full w-full bg-[#F1F5F9] overflow-hidden fade-in">
+             <div class="w-full lg:w-80 bg-white border-r border-slate-200 flex flex-col z-10 flex-shrink-0 h-[35%] lg:h-full shadow-lg">
+                <div class="p-6 border-b border-slate-100 bg-white">
+                    <h3 class="font-bold text-hotel-navy flex items-center gap-2 text-lg">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i data-lucide="book-open" class="w-4 h-4"></i></div>
+                        คำศัพท์ (Vocabulary)
+                    </h3>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-4" id="vocab-checkin"></div>
+            </div>
+            <div class="flex-1 flex flex-col h-[65%] lg:h-full relative chat-container">
+                <div class="bg-white/90 backdrop-blur px-6 py-4 border-b border-slate-200 shadow-sm flex justify-between items-center z-20">
+                     <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i data-lucide="user-check" class="w-5 h-5"></i></div>
+                        <div><h2 class="font-bold text-lg text-hotel-navy leading-tight">2. ลงทะเบียนเข้าพัก</h2><p class="text-xs text-slate-500">Check-in Registration</p></div>
+                    </div>
+                    <button onclick="resetDialogue('checkin')" class="text-sm font-medium text-slate-400 hover:text-hotel-gold flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-50"><i data-lucide="rotate-cw" class="w-4 h-4"></i> เริ่มใหม่</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6 lg:p-10 scroll-smooth space-y-6" id="chat-checkin">
+                     <div id="start-checkin" class="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
+                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-soft mb-2"><i data-lucide="message-square-dashed" class="w-10 h-10 text-slate-300"></i></div>
+                        <div class="text-center"><p class="font-medium text-slate-600">เริ่มบทสนทนา</p></div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 lg:px-8 lg:py-5 border-t border-slate-200 flex justify-center items-center gap-4 shadow-[0_-4px_20px_-2px_rgba(0,0,0,0.05)]">
+                    <button onclick="playNextStep('checkin')" class="flex items-center gap-2 bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-600 text-slate-600 px-6 py-3 rounded-xl font-bold transition-all shadow-sm active:scale-95 w-full lg:w-auto justify-center"><i data-lucide="skip-forward" class="w-5 h-5"></i><span>ถัดไป</span></button>
+                    <button onclick="playAuto('checkin')" id="btn-auto-checkin" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-200 active:scale-95 w-full lg:w-auto justify-center"><i data-lucide="play" class="w-5 h-5 fill-current"></i><span>เล่นอัตโนมัติ</span></button>
+                </div>
+            </div>
+        </section>
+
+        <section id="checkout" class="hidden-section flex-col lg:flex-row h-full w-full bg-[#F1F5F9] overflow-hidden fade-in">
+             <div class="w-full lg:w-80 bg-white border-r border-slate-200 flex flex-col z-10 flex-shrink-0 h-[35%] lg:h-full shadow-lg">
+                <div class="p-6 border-b border-slate-100 bg-white">
+                    <h3 class="font-bold text-hotel-navy flex items-center gap-2 text-lg">
+                        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center"><i data-lucide="book-open" class="w-4 h-4"></i></div>
+                        คำศัพท์ (Vocabulary)
+                    </h3>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-4" id="vocab-checkout"></div>
+            </div>
+            <div class="flex-1 flex flex-col h-[65%] lg:h-full relative chat-container">
+                <div class="bg-white/90 backdrop-blur px-6 py-4 border-b border-slate-200 shadow-sm flex justify-between items-center z-20">
+                     <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><i data-lucide="credit-card" class="w-5 h-5"></i></div>
+                        <div><h2 class="font-bold text-lg text-hotel-navy leading-tight">3. การเช็คเอาท์</h2><p class="text-xs text-slate-500">Check-out</p></div>
+                    </div>
+                    <button onclick="resetDialogue('checkout')" class="text-sm font-medium text-slate-400 hover:text-hotel-gold flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-50"><i data-lucide="rotate-cw" class="w-4 h-4"></i> เริ่มใหม่</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6 lg:p-10 scroll-smooth space-y-6" id="chat-checkout">
+                     <div id="start-checkout" class="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
+                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-soft mb-2"><i data-lucide="message-square-dashed" class="w-10 h-10 text-slate-300"></i></div>
+                        <div class="text-center"><p class="font-medium text-slate-600">เริ่มบทสนทนา</p></div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 lg:px-8 lg:py-5 border-t border-slate-200 flex justify-center items-center gap-4 shadow-[0_-4px_20px_-2px_rgba(0,0,0,0.05)]">
+                    <button onclick="playNextStep('checkout')" class="flex items-center gap-2 bg-white border border-slate-200 hover:border-purple-500 hover:text-purple-600 text-slate-600 px-6 py-3 rounded-xl font-bold transition-all shadow-sm active:scale-95 w-full lg:w-auto justify-center"><i data-lucide="skip-forward" class="w-5 h-5"></i><span>ถัดไป</span></button>
+                    <button onclick="playAuto('checkout')" id="btn-auto-checkout" class="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-purple-200 active:scale-95 w-full lg:w-auto justify-center"><i data-lucide="play" class="w-5 h-5 fill-current"></i><span>เล่นอัตโนมัติ</span></button>
+                </div>
+            </div>
+        </section>
+
+        <section id="quiz" class="hidden-section flex-col p-6 lg:p-12 max-w-5xl mx-auto w-full overflow-y-auto fade-in">
+            <h2 class="font-serif text-3xl font-bold text-hotel-navy mb-8 text-center">แบบฝึกหัดทบทวน (10 ข้อ)</h2>
+            
+            <div id="quiz-container" class="space-y-6 pb-12">
+                </div>
+            
+            <button onclick="checkScore()" id="submit-quiz-btn" class="w-full bg-hotel-navy text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition shadow-lg text-lg flex items-center justify-center gap-2 group mb-10">
+                <span>ส่งคำตอบ (Submit)</span>
+                <i data-lucide="send" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+            
+            <div id="score-summary" class="hidden bg-white p-6 rounded-2xl shadow-lg border border-hotel-gold/30 mb-10">
+                <h3 class="font-serif text-2xl font-bold text-hotel-navy mb-4 text-center">สรุปคะแนนของคุณ</h3>
+                
+                <div class="flex justify-center mb-6">
+                    <div class="relative w-48 h-48">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#C5A059" stroke-width="10" 
+                                    stroke-linecap="round" stroke-dasharray="283" 
+                                    stroke-dashoffset="283" id="score-circle" class="score-circle"/>
+                            <text x="50" y="50" text-anchor="middle" dy=".3em" 
+                                  class="text-3xl font-bold fill-hotel-navy" id="score-display">0</text>
+                            <text x="50" y="65" text-anchor="middle" 
+                                  class="text-sm fill-slate-500">/10</text>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div id="score-message" class="text-center mb-6">
+                    <p class="text-lg font-medium text-slate-700">คุณได้คะแนน <span id="final-score" class="font-bold text-hotel-gold">0</span> คะแนน</p>
+                    <p id="score-feedback" class="text-slate-600 mt-2"></p>
+                </div>
+                
+                <form id="student-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อ-นามสกุล</label>
+                            <input type="text" id="full-name" required
+                                   class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-hotel-gold focus:outline-none"
+                                   placeholder="กรุณากรอกชื่อ-นามสกุล">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">ชั้น</label>
+                            <input type="text" id="class-name" required
+                                   class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-hotel-gold focus:outline-none"
+                                   placeholder="เช่น ม.6/1">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">เลขที่</label>
+                        <input type="number" id="student-number" required
+                               class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-hotel-gold focus:outline-none"
+                               placeholder="เลขที่ในห้องเรียน">
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                        <button type="submit" id="save-score-btn"
+                                class="flex-1 bg-hotel-gold text-white font-bold py-3 px-6 rounded-xl hover:bg-amber-600 transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="save" class="w-5 h-5"></i>
+                            <span>บันทึกคะแนน</span>
+                        </button>
+                        
+                        <button type="button" onclick="resetQuiz()"
+                                class="flex-1 bg-slate-200 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-300 transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="rotate-cw" class="w-5 h-5"></i>
+                            <span>ทำแบบทดสอบอีกครั้ง</span>
+                        </button>
+                    </div>
+                    
+                    <div id="save-status" class="text-center mt-4"></div>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- CONFIGURATION ---
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxl93_sfQ1BaWp5J_kH_zlHqICYkv0Hi__NsWJla_JYiPp5ExqRCBz7avCYZFFK7Squ/exec';
+        
+        // --- DATA ---
+        const foundationData = [
+            { zh: "您好,要我帮什么忙吗?", py: "Nín hǎo, yào wǒ bāng shénme máng ma?", th: "สวัสดีค่ะ ต้องการให้ช่วยเหลืออะไรไหมคะ" },
+            { zh: "您好!我是曼谷酒店的预订部。", py: "Nín hǎo! Wǒ shì Màngǔ jiǔdiàn de yùdìng bù.", th: "สวัสดีค่ะ แผนกสำรองห้องพักโรงแรมกรุงเทพ" },
+            { zh: "有什么能为您效劳吗?", py: "Yǒu shénme néng wèi nín xiàoláo ma?", th: "มีอะไรให้รับใช้ท่านไหมคะ" },
+            { zh: "请稍候,我查一下预订记录。", py: "Qǐng shāo hòu, wǒ chá yíxià yùdìng jìlù.", th: "กรุณารอสักครู่ ดิฉันขอตรวจสอบบันทึกการจองสักครู่ค่ะ" },
+            { zh: "您能告诉我您的姓名和电话号码吗?", py: "Nín néng gàosù wǒ nín de xìngmíng hé diànhuà hàomǎ ma?", th: "ขอทราบชื่อและหมายเลขโทรศัพท์คุณผู้ชายด้วยค่ะ" },
+            { zh: "您的账单总计是450元。", py: "Nín de zhàngdān zǒngjì shì 450 yuán.", th: "ยอดชำระทั้งหมดของท่านคือ 450 หยวนค่ะ" }
+        ];
+
+        const vocabData = {
+            booking: [
+                { zh: "预订部", py: "yùdìng bù", th: "แผนกสำรองห้องพัก", img: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=400&q=80" },
+                { zh: "宾客", py: "bīnkè", th: "แขก/ลูกค้า", img: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=400&q=80" },
+                { zh: "标准房", py: "biāozhún fáng", th: "ห้องสแตนดาร์ด", img: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=400&q=80" },
+                { zh: "高级房", py: "gāojí fáng", th: "ห้องซูพีเรีย", img: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=400&q=80" },
+                { zh: "豪华房", py: "háohuá fáng", th: "ห้องดีลักซ์", img: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=400&q=80" },
+                { zh: "行政房", py: "xíngzhèng fáng", th: "ห้องเอ็กเช็คคิวทีฟ", img: "https://images.unsplash.com/photo-1586611292717-f828b167408c?auto=format&fit=crop&w=400&q=80" },
+                { zh: "套房", py: "tàofáng", th: "ห้องสวีท", img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=400&q=80" }
+            ],
+            checkin: [
+                { zh: "登记入住", py: "Dēngjì rùzhù", th: "ลงทะเบียนเข้าพัก", img: "https://images.unsplash.com/photo-1561501900-3701fa6a0864?auto=format&fit=crop&w=400&q=80" },
+                { zh: "接待员", py: "Jiēdài yuán", th: "พนักงานต้อนรับ", img: "https://images.unsplash.com/photo-1577412647305-991150c7d163?auto=format&fit=crop&w=400&q=80" },
+                { zh: "身份证", py: "shēnfènzhèng", th: "บัตรประชาชน", img: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80" },
+                { zh: "房卡", py: "fáng kǎ", th: "คีย์การ์ด", img: "https://images.unsplash.com/photo-1622151834677-70f982c9adef?auto=format&fit=crop&w=400&q=80" },
+                { zh: "无线密码", py: "wúxiàn mìmǎ", th: "รหัสไวไฟ", img: "https://images.unsplash.com/photo-1633526543814-9718c8922b7a?auto=format&fit=crop&w=400&q=80" },
+                { zh: "餐券", py: "cānquàn", th: "คูปองอาหาร", img: "https://images.unsplash.com/photo-1555529733-0e670560f7e1?auto=format&fit=crop&w=400&q=80" }
+            ],
+            checkout: [
+                { zh: "退房", py: "tuìfáng", th: "เช็คเอาท์/คืนห้อง", img: "https://images.unsplash.com/photo-1556742044-3c52d6e88c62?auto=format&fit=crop&w=400&q=80" },
+                { zh: "账单", py: "zhàngdān", th: "ใบแจ้งหนี้/บิล", img: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80" },
+                { zh: "信用卡", py: "xìnyòng kǎ", th: "บัตรเครดิต", img: "https://images.unsplash.com/photo-1556742205-e10c9486e506?auto=format&fit=crop&w=400&q=80" },
+                { zh: "签名", py: "qiānmíng", th: "เซ็นชื่อ", img: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80" },
+                { zh: "收据", py: "shōujù", th: "ใบเสร็จรับเงิน", img: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=400&q=80" }
+            ]
+        };
+
+        const dialogues = {
+            booking: [
+                { role: 'staff', zh: '您好!这里是曼谷酒店预订部,有什么能为您效劳吗?', py: 'Nín hǎo! zhèlǐ shì Màngǔ jiǔdiàn yùdìng bù, yǒu shénme néng wèi nín xiàoláo ma?', th: 'สวัสดีค่ะ แผนกสำรองห้องพักโรงแรมกรุงเทพ มีอะไรให้รับใช้ท่านไหมคะ' },
+                { role: 'guest', zh: '你好,我想预订一个房间', py: 'Nǐ hǎo, wǒ xiǎng yùdìng yí gè fángjiān.', th: 'สวัสดีครับ ผมอยากจะจองห้องพักหนึ่งห้อง' },
+                { role: 'staff', zh: '要订在什么时候?有人跟您一起来住吗?', py: 'Yào dìng zài shénme shíhou? Yǒurén gēn nín yìqǐ lái zhù ma?', th: 'ต้องการจองเมื่อไหร่คะ มีแขกที่มาพักกับท่านไหมคะ' },
+                { role: 'guest', zh: '4月16日到4月18日。两人,我和我太太', py: '4 yuè 16 rì dào 4 yuè 18 rì. Liǎng rén, wǒ hé wǒ tàitài.', th: 'วันที่ 16 เมษายน ถึงวันที่ 18 เมษายน จำนวน 2 คน ผมและภรรยาครับ' },
+                { role: 'staff', zh: '我们酒店除了有标准房、高级房、豪华房、行政房,还有套房。您要什么样的类型?', py: 'Wǒmen jiǔdiàn chúle yǒu biāozhún fáng, gāojí fáng, háohuá fáng, xíngzhèng fáng, hái yǒu tàofáng. Nín yào shénme yàng de lèixíng?', th: 'ทางเราจะมีห้องสแตนดาร์ด ห้องซูพีเรีย ห้องดีลักซ์ ห้องเอ็กเช็คคิวทีฟ นอกจากนี้ยังมีห้องสวีท คุณสนใจห้องพักแบบไหนคะ' },
+                { role: 'guest', zh: '我要一个大床的高级房。', py: 'Wǒ yào yí gè dà chuáng de gāojí fáng.', th: 'ผมต้องการห้องซูพีเรียเตียงคิงไซซ์ครับ' },
+                { role: 'staff', zh: '请别挂断好吗?我来查看一下是否有空房间... 让您久等了,很抱歉,我们没有高级房了,但是可以提供您大床的豪华房,现在价格是每晚180元,包括两位美式早餐,外加增值税。', py: 'Qǐng bié guà duàn hǎo ma? ... Ràng nín jiǔ děng le, hěn bàoqiàn, wǒmen méiyǒu gāojí fáng le, dànshì kěyǐ tígōng nín dà chuáng de háohuá fáng, xiànzài jiàgé shì měi wǎn 180 yuán...', th: 'กรุณารอสายสักครู่... ขออภัยค่ะ ห้องซูพีเรียเต็มแล้ว แต่เรามีห้องดีลักซ์ราคา 180 หยวน รวมอาหารเช้าค่ะ' },
+                { role: 'guest', zh: '贵酒店有什么设施呢?', py: 'Guì jiǔdiàn yǒu shénme shèshī ne?', th: 'โรงแรมมีสิ่งอำนวยความสะดวกอะไรบ้างครับ' },
+                { role: 'staff', zh: '我们酒店有餐厅、会议室、美容服务、健身房、无线网络及24小时送餐服务。', py: 'Wǒmen jiǔdiàn yǒu cāntīng, huìyì shì, měiróng fúwù, jiànshēn fáng, wúxiàn wǎngluò jí 24 xiǎoshí sòng cān fúwù.', th: 'มีห้องอาหาร ห้องประชุม ร้านเสริมสวย ฟิตเนส WIFI และรูมเซอร์วิส 24 ชม. ค่ะ' },
+                { role: 'guest', zh: '好的。我订这个', py: 'Hǎo de. Wǒ dìng zhè ge.', th: 'ตกลงครับ ผมจองห้องนี้ครับ' },
+                { role: 'staff', zh: '谢谢您,先生。您能告诉我您的姓名和电话号码吗?', py: 'Xièxiè nín, xiānsheng. Nín néng gàosù wǒ nín de xìngmíng hé diànhuà hàomǎ ma?', th: 'ขอทราบชื่อและหมายเลขโทรศัพท์ด้วยค่ะ' },
+                { role: 'guest', zh: '没问题。我叫THANA,电话是5 5 3 4 5 6 9。', py: 'Méi wèntí. Wǒ jiào THANA, diànhuà shì 5 5 3 4 5 6 9.', th: 'ได้ครับ ผมชื่อธนา โทร 5 5 3 4 5 6 9' },
+                { role: 'staff', zh: '我再确认您的预订,THANA先生,电话5 5 3 4 5 6 9,预订一间高级房,4月16日入住4月18日退房,对吗?', py: 'Wǒ zài quèrèn nín de yùdìng, THANA xiānsheng, diànhuà 5 5 3 4 5 6 9...', th: 'ขอยืนยันการจองค่ะ คุณธนา เบอร์ 5 5 3 4 5 6 9 จองห้องซูพีเรีย 16-18 เมษายน ถูกต้องไหมคะ?' },
+                { role: 'guest', zh: '对的。大概是晚上9点到。', py: 'Duì de. Dàgài shì wǎnshang 9 diǎn dào.', th: 'ถูกต้องครับ ถึงประมาณ 3 ทุ่ม' },
+                { role: 'staff', zh: '感谢您的来电。我们期待为您服务。', py: 'Gǎnxiè nín de láidiàn. Wǒmen qīdài wèi nín fúwù.', th: 'ขอบคุณค่ะ เรารอคอยที่จะให้บริการท่านค่ะ' }
+            ],
+            checkin: [
+                { role: 'staff', zh: '下午好!欢迎来到北京酒店。有什么能为您效劳吗?', py: 'Xiàwǔ hǎo! Huānyíng lái dào Běijīng jiǔdiàn. Yǒu shénme néng wèi nín xiàoláo ma?', th: 'สวัสดีค่ะ ยินดีต้อนรับสู่โรงแรมปักกิ่ง มีอะไรให้ช่วยไหมคะ' },
+                { role: 'guest', zh: '我想办理住宿登记手续。', py: 'Wǒ xiǎng bànlǐ zhùsù dēngjì shǒuxù.', th: 'ผมจะมาเช็คอินครับ' },
+                { role: 'staff', zh: '好的,先生。请问您的姓名?', py: 'Hǎo de, xiānshēng. Qǐngwèn nín de xìngmíng?', th: 'ได้ค่ะ ขอทราบชื่อด้วยค่ะ' },
+                { role: 'guest', zh: '我叫理查', py: 'Wǒ jiào Lǐ Chá.', th: 'ผมชื่อริชาร์ด' },
+                { role: 'staff', zh: '理查先生,您预订了吗?', py: 'Lǐ Chá xiānsheng, nín yùdìng le ma?', th: 'คุณริชาร์ดจองไว้หรือยังคะ' },
+                { role: 'guest', zh: '我预订了。', py: 'Wǒ yùdìng le.', th: 'จองแล้วครับ' },
+                { role: 'staff', zh: '请稍候... 理查先生您预订的是3月5日至7日住2个晚上的单人房间,对吗?', py: 'Qǐng shāohòu... Lǐ Chá xiānsheng nín yùdìng de shì 3 yuè 5 rì zhì 7 rì zhù liǎng gè wǎnshàng de dān rén fángjiān, duì ma?', th: 'สักครู่นะคะ... คุณริชาร์ดจองห้องเดี่ยววันที่ 5-7 มีนาคม 2 คืน ถูกต้องไหมคะ' },
+                { role: 'guest', zh: '对。', py: 'Duì.', th: 'ถูกต้องครับ' },
+                { role: 'staff', zh: '请您出示一下身份证并填写这张登记表好吗?', py: 'Qǐng nín chūshì yíxià shēnfènzhèng bìng tiánxiě zhè zhāng dēngjì biǎo hǎo ma?', th: 'ขอบัตรประชาชนและกรอกแบบฟอร์มด้วยค่ะ' },
+                { role: 'guest', zh: '好的,给你。', py: 'Hǎo de, gěi nǐ.', th: 'นี่ครับ' },
+                { role: 'staff', zh: '谢谢,您打算如何付款?', py: 'Xièxie, nín dǎsuàn rúhé fùkuǎn?', th: 'ขอบคุณค่ะ จะชำระเงินอย่างไรคะ' },
+                { role: 'guest', zh: '用美国运通卡。', py: 'Yòng Měiguó yùntōng kǎ.', th: 'ใช้บัตร AMEX ครับ' },
+                { role: 'staff', zh: '请让我来刷一下您的卡,好吗?', py: 'Qǐng ràng wǒ lái shuā yíxià nín de kǎ, hǎo ma?', th: 'ขอรูดบัตรนะคะ' },
+                { role: 'guest', zh: '好的,给你。', py: 'Hǎo de, gěi nǐ.', th: 'ครับ' },
+                { role: 'staff', zh: '谢谢您。您的房间是806房,这是您的房卡、无线密码和餐券,祝您住得愉快。', py: 'Xièxie nín. Nín de fángjiān shì 806 fáng, zhè shì nín de fáng kǎ, wúxiàn mìmǎ hé cānquàn, zhù nín zhù de yúkuài.', th: 'ขอบคุณค่ะ ห้อง 806 นี่คีย์การ์ด รหัสไวไฟ และคูปองอาหารค่ะ ขอให้พักผ่อนอย่างมีความสุขนะคะ' }
+            ],
+            checkout: [
+                { role: 'staff', zh: '您早,有什么能为您效劳的吗?', py: 'Nín zǎo, yǒu shénme néng wèi nín xiàoláo de ma?', th: 'อรุณสวัสดิ์ค่ะ มีอะไรให้ช่วยไหมคะ' },
+                { role: 'guest', zh: '我想退房。', py: 'Wǒ xiǎng tuìfáng.', th: 'จะเช็คเอาท์ครับ' },
+                { role: 'staff', zh: '好的,请把您的房卡给我好吗?', py: 'Hǎo de, qǐng bǎ nín de fáng kǎ gěi wǒ hǎo ma?', th: 'ได้ค่ะ ขอคืนคีย์การ์ดด้วยค่ะ' },
+                { role: 'guest', zh: '好的,给你。', py: 'Hǎo de, gěi nǐ.', th: 'นี่ครับ' },
+                { role: 'staff', zh: '请等一下,我帮您结算账单。曾明先生,您的账单总计是450元。您打算如何付款?', py: 'Qǐng děng yíxià, wǒ bāng nín jiésuàn zhàngdān. Zéng Míng xiānsheng, nín de zhàngdān zǒngjì shì 450 yuán. Nín dǎsuàn rúhé fùkuǎn?', th: 'สักครู่นะคะ... คุณเจิงหมิง ยอดรวม 450 หยวน จะชำระอย่างไรคะ' },
+                { role: 'guest', zh: '用信用卡。你们接受维萨卡吗?', py: 'Yòng xìnyòng kǎ. Nǐmen jiēshòu wéisà kǎ ma?', th: 'บัตรเครดิต รับ VISA ไหมครับ' },
+                { role: 'staff', zh: '是的,曾明先生。', py: 'Shì de, Zéng Míng xiānsheng.', th: 'รับค่ะ' },
+                { role: 'guest', zh: '给你。', py: 'Gěi nǐ.', th: 'นี่ครับ' },
+                { role: 'staff', zh: '请您在这里签名,好吗?', py: 'Qǐng nín zài zhèlǐ qiānmíng, hǎo ma?', th: 'เซ็นชื่อตรงนี้ค่ะ' },
+                { role: 'guest', zh: '好的。', py: 'Hǎo de.', th: 'ครับ' },
+                { role: 'staff', zh: '谢谢您,这是您的卡和收据。祝您旅途愉快。', py: 'Xièxie nín, zhè shì nín de kǎ hé shōujù. Zhù nín lǚtú yúkuài.', th: 'ขอบคุณค่ะ นี่บัตรและใบเสร็จ ขอให้เดินทางโดยสวัสดิภาพค่ะ' }
+            ]
+        };
+
+        const quizQuestions = [
+            { type: 'match', q: '预订部', options: ['แขก', 'ห้องสแตนดาร์ด', 'แผนกสำรองห้องพัก', 'ใบเสร็จ'], ans: 2 },
+            { type: 'match', q: '身份证', options: ['บัตรประชาชน', 'คีย์การ์ด', 'บัตรเครดิต', 'พนักงาน'], ans: 0 },
+            { type: 'choice', q: 'คำว่า "Check-out" ภาษาจีนคืออะไร?', options: ['登记入住', '结账退房', '预订房间', '刷卡'], ans: 1 },
+            { type: 'choice', q: 'คำว่า "签名" (Qiānmíng) แปลว่าอะไร?', options: ['เซ็นชื่อ', 'รูดบัตร', 'จ่ายเงิน', 'กรอกข้อมูล'], ans: 0 },
+            { type: 'tf', q: '"标准房" (Biāozhún fáng) แปลว่า "Deluxe Room" ใช่หรือไม่?', ans: false },
+            { type: 'fill', q: 'ยอดค่าใช้จ่ายทั้งหมดของคุณคือ 450 หยวน (您的____总计是450元)', ans: '账单' },
+            { type: 'choice', q: 'พนักงานจะพูดว่า "请出示一下____" เมื่อต้องการขอดูบัตรประชาชน', options: ['房卡', '收据', '身份证', '现金'], ans: 2 },
+            { type: 'tf', q: '"房卡" (Fáng kǎ) แปลว่า Key Card ใช่หรือไม่?', ans: true },
+            { type: 'choice', q: 'คำว่า "Credit Card" ภาษาจีนคือ?', options: ['信用卡', '房卡', '现金', '支票'], ans: 0 },
+            { type: 'match', q: '宾客', options: ['พนักงาน', 'แขก', 'ผู้จัดการ', 'แม่บ้าน'], ans: 1 }
+        ];
+
+        // --- STATE VARIABLES ---
+        let synth = window.speechSynthesis;
+        let selectedVoice = null; // เก็บเสียงที่เลือกไว้
+        let dialogueState = {
+            booking: { index: 0, isAuto: false },
+            checkin: { index: 0, isAuto: false },
+            checkout: { index: 0, isAuto: false }
+        };
+        let currentTimeout;
+        let userScore = 0;
+
+        // --- แก้ไข: ฟังก์ชันสลับข้อสอบ (Shuffle) ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // --- แก้ไข: ระบบเสียง TTS แบบ Robust ---
+        function initVoices() {
+            const voices = synth.getVoices();
+            // พยายามหาเสียง Google จีน หรือเสียงจีนอื่นๆ
+            const zhVoices = voices.filter(v => v.lang.includes('zh') || v.lang.includes('CN'));
+            
+            // เรียงลำดับความสำคัญ: Google > Microsoft > อื่นๆ
+            selectedVoice = zhVoices.find(v => v.name.includes('Google')) || 
+                            zhVoices.find(v => v.name.includes('Yunxi')) || 
+                            zhVoices[0];
+
+            console.log("Selected Voice:", selectedVoice ? selectedVoice.name : "None found, using default");
+        }
+        
+        // Listener สำหรับ Browser ที่โหลดเสียงทีหลัง (เช่น Chrome on Android)
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = initVoices;
+        }
+
+        // --- GOOGLE SHEET INTEGRATION (IMPROVED) ---
+        async function saveScoreToGoogleSheet(fullName, className, studentNumber, score) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 วินาที Timeout
+
+            try {
+                const params = new URLSearchParams();
+                params.append('action', 'saveScore');
+                params.append('fullName', fullName);
+                params.append('className', className);
+                params.append('studentNumber', studentNumber);
+                params.append('score', score.toString());
+                
+                // ใช้ fetch กับ no-cors mode
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                // เนื่องจาก no-cors เรา assume ว่าสำเร็จถ้าไม่ throw error
+                return { success: true, message: 'บันทึกข้อมูลสำเร็จ' };
+            } catch (error) {
+                clearTimeout(timeoutId);
+                console.error('Error saving to Google Sheet:', error);
+                
+                if (error.name === 'AbortError') {
+                    return { success: false, message: 'หมดเวลาเชื่อมต่อ (Timeout) กรุณาลองใหม่' };
+                }
+                return { success: false, message: 'ไม่สามารถบันทึกข้อมูลได้: ' + error.message };
+            }
+        }
+
+        async function getScoresFromGoogleSheet() {
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getScores&timestamp=${Date.now()}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error getting scores:', error);
+                return { status: 'error', message: 'ไม่สามารถโหลดข้อมูลได้' };
+            }
+        }
+
+        // --- SPEECH FUNCTIONS ---
+        // แก้ไขฟังก์ชัน speakText ให้จัดการ Error 'interrupted' ได้ดีขึ้น
+        function speakText(text, isStaff = true, callback) {
+            // หยุดเสียงเก่าก่อน (นี่คือสาเหตุที่ทำให้เกิด interrupted ซึ่งเป็นเรื่องปกติ)
+            if (synth.speaking) synth.cancel();
+
+            if (text !== '') {
+                const utterThis = new SpeechSynthesisUtterance(text);
+                
+                // ใช้เสียงที่โหลดไว้แล้ว (ถ้ามี)
+                if (selectedVoice) {
+                    utterThis.voice = selectedVoice;
+                }
+                
+                utterThis.lang = 'zh-CN';
+                utterThis.rate = 0.85;
+                utterThis.pitch = isStaff ? 1.1 : 0.8;
+
+                utterThis.onend = () => { if(callback) callback(); }
+                
+                // --- จุดที่แก้ไข: กรอง Error interrupted ออก ---
+                utterThis.onerror = (e) => { 
+                    // ถ้า error คือ interrupted หรือ canceled แปลว่าเราสั่งหยุดเอง ไม่ต้องแจ้งเตือน
+                    if (e.error === 'interrupted' || e.error === 'canceled') {
+                        // ไม่ต้องทำอะไร หรือแค่ log เบาๆ
+                        // console.log("เสียงถูกตัดจบเพื่อเล่นประโยคใหม่"); 
+                    } else {
+                        console.error("Speech Error:", e); 
+                    }
+                    
+                    // เรียก callback เพื่อให้ Flow ทำงานต่อได้ (เช่น ปุ่ม Play กลับมาเป็นปกติ)
+                    if(callback) callback(); 
+                }
+                // ------------------------------------------
+                
+                synth.speak(utterThis);
+            } else if (callback) {
+                callback();
+            }
+        }
+        // --- DIALOGUE FUNCTIONS ---
+        function createBubbleHTML(item, isStaff) {
+            const bubbleClass = isStaff ? 'bg-[#F3EAD3] border border-hotel-gold/30 rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl ml-auto' : 'bg-white border border-slate-200 rounded-tl-2xl rounded-tr-2xl rounded-br-2xl mr-auto';
+            const alignClass = isStaff ? 'justify-end' : 'justify-start';
+            const avatarHtml = isStaff 
+                ? `<div class="w-10 h-10 rounded-full bg-hotel-gold text-white flex items-center justify-center flex-shrink-0 shadow-md ml-3"><i data-lucide="headset" class="w-5 h-5"></i></div>`
+                : `<div class="w-10 h-10 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center flex-shrink-0 shadow-sm mr-3"><i data-lucide="user" class="w-5 h-5"></i></div>`;
+
+            return `
+                <div class="flex items-end ${alignClass} bubble-enter mb-6">
+                    ${!isStaff ? avatarHtml : ''}
+                    <div class="${bubbleClass} shadow-sm p-4 max-w-[85%] lg:max-w-[75%] relative group">
+                        <button class="absolute top-2 right-2 text-slate-400 hover:text-hotel-gold opacity-0 group-hover:opacity-100 transition-opacity" onclick="speakText('${item.zh.replace(/'/g, "\\'")}', ${isStaff})">
+                            <i data-lucide="volume-2" class="w-4 h-4"></i>
+                        </button>
+                        <p class="text-sm text-slate-500 font-bold mb-1">${isStaff ? 'พนักงาน' : 'แขก'}</p>
+                        <p class="hanzi text-lg lg:text-xl font-bold text-slate-800 mb-2 leading-relaxed">${item.zh}</p>
+                        <p class="pinyin text-sm text-hotel-accent font-medium mb-2">${item.py}</p>
+                        <p class="text-sm text-slate-500 pt-2 border-t border-slate-400/10 italic">${item.th}</p>
+                    </div>
+                    ${isStaff ? avatarHtml : ''}
+                </div>
+            `;
+        }
+
+        function addBubble(id, index) {
+            const container = document.getElementById(`chat-${id}`);
+            const startMsg = document.getElementById(`start-${id}`);
+            if(startMsg) startMsg.style.display = 'none';
+
+            const data = dialogues[id];
+            if (index >= data.length) return false;
+
+            const item = data[index];
+            const isStaff = item.role === 'staff';
+            
+            const div = document.createElement('div');
+            div.innerHTML = createBubbleHTML(item, isStaff);
+            container.appendChild(div);
+            
+            lucide.createIcons();
+            
+            // --- แก้ไข: ใช้ requestAnimationFrame เพื่อให้ Scroll ทำงานแม่นยำขึ้น ---
+            requestAnimationFrame(() => {
+                 container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            });
+            
+            return true;
+        }
+
+        async function playNextStep(id) {
+            const state = dialogueState[id];
+            state.isAuto = false;
+            updateAutoButton(id, false);
+            synth.cancel();
+
+            const hasMore = addBubble(id, state.index);
+            if (hasMore) {
+                const item = dialogues[id][state.index];
+                const isStaff = item.role === 'staff';
+                speakText(item.zh, isStaff);
+                state.index++;
+            }
+        }
+
+        async function playAuto(id) {
+            const state = dialogueState[id];
+            
+            if(state.isAuto) {
+                state.isAuto = false;
+                updateAutoButton(id, false);
+                synth.cancel();
+                clearTimeout(currentTimeout);
+                return;
+            }
+
+            state.isAuto = true;
+            updateAutoButton(id, true);
+
+            const processNext = async () => {
+                if(!state.isAuto) return;
+                
+                const hasMore = addBubble(id, state.index);
+                if (!hasMore) {
+                    state.isAuto = false;
+                    updateAutoButton(id, false);
+                    return;
+                }
+
+                const item = dialogues[id][state.index];
+                const isStaff = item.role === 'staff';
+                state.index++;
+
+                await new Promise(resolve => speakText(item.zh, isStaff, resolve));
+                if(state.isAuto) {
+                    currentTimeout = setTimeout(processNext, 1200); 
+                }
+            };
+
+            processNext();
+        }
+
+        function updateAutoButton(id, isPlaying) {
+            const btn = document.getElementById(`btn-auto-${id}`);
+            let baseColor = 'blue';
+            if(id === 'checkin') baseColor = 'emerald';
+            if(id === 'checkout') baseColor = 'purple';
+
+            if(isPlaying) {
+                btn.innerHTML = `<i data-lucide="pause" class="w-5 h-5 fill-current"></i><span>หยุด (Pause)</span>`;
+                btn.className = `flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 w-full lg:w-auto justify-center`;
+            } else {
+                btn.innerHTML = `<i data-lucide="play" class="w-5 h-5 fill-current"></i><span>เล่นอัตโนมัติ (Auto)</span>`;
+                btn.className = `flex items-center gap-2 bg-${baseColor}-600 hover:bg-${baseColor}-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-${baseColor}-200 active:scale-95 w-full lg:w-auto justify-center`;
+            }
+            lucide.createIcons();
+        }
+
+        function resetDialogue(id) {
+            dialogueState[id] = { index: 0, isAuto: false };
+            synth.cancel();
+            clearTimeout(currentTimeout);
+            updateAutoButton(id, false);
+            
+            const container = document.getElementById(`chat-${id}`);
+            container.innerHTML = `
+                <div id="start-${id}" class="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-soft mb-2"><i data-lucide="message-square-dashed" class="w-10 h-10 text-slate-300"></i></div>
+                    <div class="text-center"><p class="font-medium text-slate-600">เริ่มบทสนทนา</p></div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // --- QUIZ FUNCTIONS ---
+        function checkScore() {
+            let score = 0;
+            quizQuestions.forEach((q, idx) => {
+                let userAns;
+                if(q.type === 'fill') {
+                    const input = document.querySelector(`input[name="q${idx}"]`);
+                    userAns = input ? input.value.trim() : '';
+                    if(userAns === q.ans) score++;
+                } else if (q.type === 'tf') {
+                    const el = document.querySelector(`input[name="q${idx}"]:checked`);
+                    if(el && (el.value === 'true') === q.ans) score++;
+                } else {
+                    const el = document.querySelector(`input[name="q${idx}"]:checked`);
+                    if(el && parseInt(el.value) === q.ans) score++;
+                }
+            });
+            
+            userScore = score;
+            showScoreSummary(score);
+            return score;
+        }
+
+        function showScoreSummary(score) {
+            const summarySection = document.getElementById('score-summary');
+            const quizSection = document.getElementById('quiz-container');
+            const submitButton = document.getElementById('submit-quiz-btn');
+            
+            // ซ่อนแบบทดสอบและปุ่มส่งคำตอบเดิม
+            quizSection.style.opacity = '0.5';
+            quizSection.style.pointerEvents = 'none';
+            submitButton.style.display = 'none';
+            
+            // แสดงส่วนสรุปคะแนน
+            summarySection.classList.remove('hidden');
+            
+            // อัพเดตคะแนน
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('score-display').textContent = score;
+            
+            // อัพเดตวงกลมคะแนน
+            const percentage = (score / quizQuestions.length) * 100;
+            const circle = document.getElementById('score-circle');
+            const circumference = 283;
+            const offset = circumference - (percentage / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+            
+            // ข้อความแสดงผลตามคะแนน
+            const feedback = document.getElementById('score-feedback');
+            if (score >= 8) {
+                feedback.textContent = 'ยอดเยี่ยมมาก! คุณมีความรู้ภาษาจีนสำหรับงานบริการดีมาก';
+                feedback.className = 'text-emerald-600 font-medium';
+            } else if (score >= 5) {
+                feedback.textContent = 'ดีมาก! คุณมีความรู้พื้นฐานที่ดี ควรทบทวนเพิ่มเติม';
+                feedback.className = 'text-blue-600 font-medium';
+            } else {
+                feedback.textContent = 'ควรทบทวนเนื้อหาอีกครั้งเพื่อความเข้าใจที่ดียิ่งขึ้น';
+                feedback.className = 'text-amber-600 font-medium';
+            }
+            
+            // กรอกข้อมูลอัตโนมัติถ้ามีใน localStorage
+            const savedData = JSON.parse(localStorage.getItem('studentData') || '{}');
+            if (savedData.fullName) {
+                document.getElementById('full-name').value = savedData.fullName;
+                document.getElementById('class-name').value = savedData.className;
+                document.getElementById('student-number').value = savedData.studentNumber;
+            }
+        }
+
+        // ฟังก์ชันบันทึกคะแนน
+        document.getElementById('student-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const saveBtn = document.getElementById('save-score-btn');
+            const statusDiv = document.getElementById('save-status');
+            
+            const fullName = document.getElementById('full-name').value.trim();
+            const className = document.getElementById('class-name').value.trim();
+            const studentNumber = document.getElementById('student-number').value.trim();
+            
+            if (!fullName || !className || !studentNumber) {
+                statusDiv.innerHTML = '<p class="text-red-600">กรุณากรอกข้อมูลให้ครบถ้วน</p>';
+                return;
+            }
+            
+            // บันทึกข้อมูลใน localStorage
+            localStorage.setItem('studentData', JSON.stringify({
+                fullName: fullName,
+                className: className,
+                studentNumber: studentNumber
+            }));
+            
+            // แสดงสถานะกำลังบันทึก
+            const originalBtnText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>กำลังบันทึก...</span>';
+            saveBtn.disabled = true;
+            lucide.createIcons();
+            
+            statusDiv.innerHTML = '<p class="text-blue-600">กำลังบันทึกข้อมูล...</p>';
+            
+            try {
+                // ส่งข้อมูลไปยัง Google Apps Script
+                const result = await saveScoreToGoogleSheet(fullName, className, studentNumber, userScore);
+                
+                if (result.success) {
+                    // แสดงสถานะสำเร็จ
+                    statusDiv.innerHTML = `
+                        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                            <div class="flex items-center gap-2 text-emerald-700">
+                                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                                <span class="font-bold">บันทึกข้อมูลสำเร็จ!</span>
+                            </div>
+                            <p class="text-emerald-600 text-sm mt-1">คะแนนของคุณถูกบันทึกลงในระบบแล้ว</p>
+                        </div>
+                    `;
+                    
+                    saveBtn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i><span>บันทึกแล้ว</span>';
+                    saveBtn.className = 'flex-1 bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2';
+                    saveBtn.disabled = true;
+                    
+                    lucide.createIcons();
+                    
+                    // แสดงปุ่มดูคะแนนทั้งหมด
+                    setTimeout(() => {
+                        const showScoresBtn = document.createElement('button');
+                        showScoresBtn.innerHTML = '<i data-lucide="bar-chart"></i> ดูคะแนนทั้งหมด';
+                        showScoresBtn.className = 'w-full mt-4 bg-hotel-navy text-white font-bold py-3 px-6 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2';
+                        showScoresBtn.onclick = showAllScores;
+                        statusDiv.appendChild(showScoresBtn);
+                        lucide.createIcons();
+                    }, 2000);
+                } else {
+                    throw new Error(result.message);
+                }
+                
+            } catch (error) {
+                console.error('Error saving score:', error);
+                statusDiv.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <div class="flex items-center gap-2 text-red-700">
+                            <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                            <span class="font-bold">เกิดข้อผิดพลาด</span>
+                        </div>
+                        <p class="text-red-600 text-sm mt-1">${error.message || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองอีกครั้ง'}</p>
+                    </div>
+                `;
+                
+                saveBtn.innerHTML = originalBtnText;
+                saveBtn.disabled = false;
+                lucide.createIcons();
+            }
+        });
+
+        // ฟังก์ชันรีเซ็ตแบบทดสอบ
+        function resetQuiz() {
+            userScore = 0;
+            
+            // รีเซ็ตฟอร์มคำตอบ
+            document.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.checked = false;
+            });
+            
+            document.querySelectorAll('input[type="text"]').forEach(input => {
+                if (input.name && input.name.startsWith('q')) {
+                    input.value = '';
+                }
+            });
+            
+            // ซ่อนสรุปคะแนน
+            document.getElementById('score-summary').classList.add('hidden');
+            
+            // แสดงแบบทดสอบอีกครั้ง
+            const quizSection = document.getElementById('quiz-container');
+            const submitButton = document.getElementById('submit-quiz-btn');
+            
+            quizSection.style.opacity = '1';
+            quizSection.style.pointerEvents = 'auto';
+            submitButton.style.display = 'flex';
+            
+            // รีเซ็ตสถานะการบันทึก
+            const saveBtn = document.getElementById('save-score-btn');
+            saveBtn.innerHTML = '<i data-lucide="save" class="w-5 h-5"></i><span>บันทึกคะแนน</span>';
+            saveBtn.className = 'flex-1 bg-hotel-gold text-white font-bold py-3 px-6 rounded-xl hover:bg-amber-600 transition-all flex items-center justify-center gap-2';
+            saveBtn.disabled = false;
+            
+            document.getElementById('save-status').innerHTML = '';
+            
+            // --- แก้ไข: สลับข้อสอบใหม่เมื่อกดทำใหม่ ---
+            shuffleArray(quizQuestions);
+            renderQuiz();
+
+            lucide.createIcons();
+        }
+
+        // ฟังก์ชันดูคะแนนทั้งหมด
+        async function showAllScores() {
+            // แสดง Loading Spinner ก่อน
+            const loadingModal = document.createElement('div');
+            loadingModal.className = 'fixed inset-0 bg-black/20 flex items-center justify-center z-50';
+            loadingModal.innerHTML = `<div class="bg-white p-4 rounded-xl shadow-lg flex items-center gap-3"><i data-lucide="loader" class="animate-spin w-6 h-6 text-hotel-gold"></i><span>กำลังโหลดข้อมูล...</span></div>`;
+            document.body.appendChild(loadingModal);
+            lucide.createIcons();
+
+            try {
+                const result = await getScoresFromGoogleSheet();
+                loadingModal.remove(); // ลบ Loading
+
+                if (result.status === 'success') {
+                    const scores = result.data.scores || [];
+                    
+                    // สร้าง Modal แสดงคะแนน
+                    const modal = document.createElement('div');
+                    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+                    modal.innerHTML = `
+                        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden fade-in">
+                            <div class="bg-hotel-navy text-white p-6 flex justify-between items-center">
+                                <h3 class="font-serif text-xl font-bold">คะแนนทั้งหมด</h3>
+                                <button onclick="this.closest('.fixed').remove()" class="text-white hover:text-hotel-gold">
+                                    <i data-lucide="x" class="w-6 h-6"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="p-6 overflow-y-auto max-h-[60vh]">
+                                ${scores.length === 0 ? 
+                                    '<p class="text-center text-slate-500 py-8">ยังไม่มีคะแนนที่บันทึกไว้</p>' :
+                                    `
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-sm">
+                                            <thead>
+                                                <tr class="border-b border-slate-200">
+                                                    <th class="text-left p-3 text-slate-700">วันที่</th>
+                                                    <th class="text-left p-3 text-slate-700">ชื่อ-นามสกุล</th>
+                                                    <th class="text-left p-3 text-slate-700">ชั้น</th>
+                                                    <th class="text-left p-3 text-slate-700">เลขที่</th>
+                                                    <th class="text-left p-3 text-slate-700">คะแนน</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${scores.map(score => `
+                                                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                                        <td class="p-3">${score.date || '-'}</td>
+                                                        <td class="p-3">${score.fullName || '-'}</td>
+                                                        <td class="p-3">${score.className || '-'}</td>
+                                                        <td class="p-3">${score.studentNumber || '-'}</td>
+                                                        <td class="p-3">
+                                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold
+                                                                ${score.score >= 8 ? 'bg-emerald-100 text-emerald-800' : 
+                                                                  score.score >= 5 ? 'bg-blue-100 text-blue-800' : 
+                                                                  'bg-amber-100 text-amber-800'}">
+                                                                ${score.score || '0'}/10
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    `
+                                }
+                            </div>
+                            
+                            <div class="border-t border-slate-200 p-4 flex justify-end">
+                                <button onclick="this.closest('.fixed').remove()" 
+                                        class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">
+                                    ปิด
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(modal);
+                    lucide.createIcons();
+                    
+                    // เพิ่มฟังก์ชันปิด modal เมื่อคลิกภายนอก
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === modal) {
+                            modal.remove();
+                        }
+                    });
+                } else {
+                    alert('ไม่สามารถโหลดข้อมูลคะแนนได้: ' + (result.message || 'เกิดข้อผิดพลาด'));
+                }
+            } catch (error) {
+                loadingModal.remove();
+                console.error('Error showing scores:', error);
+                alert('ไม่สามารถโหลดข้อมูลคะแนนได้');
+            }
+        }
+
+        // --- RENDER FUNCTIONS ---
+        function renderFoundation() {
+            const container = document.getElementById('foundation-container');
+            container.innerHTML = foundationData.map(item => `
+                <div class="flip-card h-72 cursor-pointer group perspective-1000" onclick="this.classList.toggle('flipped')">
+                    <div class="flip-card-inner relative w-full h-full duration-500 transform-style-3d shadow-soft hover:shadow-card rounded-2xl">
+                        <div class="flip-card-front absolute w-full h-full backface-hidden bg-white rounded-2xl p-6 flex flex-col items-center justify-center border border-slate-100">
+                            <button onclick="event.stopPropagation(); speakText('${item.zh.replace(/'/g, "\\'")}', true)" class="absolute top-4 right-4 text-slate-300 hover:text-hotel-gold hover:scale-110 transition-all z-10 p-2"><i data-lucide="volume-2" class="w-6 h-6"></i></button>
+                            <span class="text-xs font-bold text-hotel-gold bg-hotel-gold/10 px-3 py-1 rounded-full mb-6">คลิกเพื่อดูคำแปล</span>
+                            <p class="hanzi text-3xl font-bold text-slate-800 text-center mb-4 leading-relaxed">${item.zh}</p>
+                            <p class="pinyin text-slate-500 text-center font-medium">${item.py}</p>
+                        </div>
+                        <div class="flip-card-back absolute w-full h-full backface-hidden rotate-y-180 bg-hotel-navy text-white rounded-2xl p-6 flex flex-col items-center justify-center">
+                            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4 text-hotel-gold"><i data-lucide="languages" class="w-6 h-6"></i></div>
+                            <p class="text-xl font-medium text-center leading-relaxed">${item.th}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderVocab(type, containerId) {
+            document.getElementById(containerId).innerHTML = vocabData[type].map(item => `
+                <div class="flex flex-col gap-2 p-4 rounded-xl bg-slate-50 hover:bg-white hover:shadow-md transition-all group border border-transparent hover:border-slate-100">
+                    <img src="${item.img}" class="w-full h-32 object-cover rounded-lg mb-2 shadow-sm bg-slate-200" alt="${item.th}" loading="lazy">
+                    <div class="flex items-start gap-3">
+                        <button onclick="speakText('${item.zh}', true)" class="text-slate-400 hover:text-hotel-gold mt-1 flex-shrink-0 transition-colors p-1 bg-white rounded-full shadow-sm"><i data-lucide="volume-2" class="w-4 h-4"></i></button>
+                        <div>
+                            <span class="block font-bold text-hotel-navy hanzi text-lg group-hover:text-hotel-gold transition-colors">${item.zh}</span>
+                            <span class="block text-xs text-hotel-accent font-medium mb-1 tracking-wide">${item.py}</span>
+                            <span class="text-sm text-slate-500">${item.th}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = quizQuestions.map((q, idx) => {
+                let content = '';
+                if(q.type === 'match') {
+                    content = `
+                        <p class="mb-2 font-medium">ความหมายของ "${q.q}" คือ?</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            ${q.options.map((opt, i) => `
+                                <label class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50">
+                                    <input type="radio" name="q${idx}" value="${i}" class="text-hotel-gold focus:ring-hotel-gold">
+                                    <span>${opt}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    `;
+                } else if (q.type === 'choice') {
+                    content = `
+                        <p class="mb-2 font-medium">${q.q}</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            ${q.options.map((opt, i) => `
+                                <label class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50">
+                                    <input type="radio" name="q${idx}" value="${i}" class="text-hotel-gold focus:ring-hotel-gold">
+                                    <span>${opt}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    `;
+                } else if (q.type === 'tf') {
+                    content = `
+                        <p class="mb-2 font-medium">${q.q}</p>
+                        <div class="flex gap-4">
+                             <label class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 w-full">
+                                <input type="radio" name="q${idx}" value="true" class="text-hotel-gold"> <span>ใช่ (True)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 w-full">
+                                <input type="radio" name="q${idx}" value="false" class="text-hotel-gold"> <span>ไม่ใช่ (False)</span>
+                            </label>
+                        </div>
+                    `;
+                } else if (q.type === 'fill') {
+                    content = `
+                        <p class="mb-2 font-medium">${q.q}</p>
+                        <input type="text" name="q${idx}" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-hotel-gold focus:outline-none" placeholder="พิมพ์คำตอบภาษาจีน...">
+                    `;
+                }
+
+                return `
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="bg-hotel-gold text-white text-xs font-bold px-2 py-1 rounded">ข้อ ${idx+1}</span>
+                        </div>
+                        ${content}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- TAB SWITCHING ---
+        function switchTab(tabId) {
+            synth.cancel();
+            clearTimeout(currentTimeout);
+            ['booking', 'checkin', 'checkout'].forEach(id => {
+                if (dialogueState[id]) {
+                    dialogueState[id].isAuto = false;
+                    updateAutoButton(id, false);
+                }
+            });
+
+            document.querySelectorAll('section').forEach(el => {
+                el.classList.remove('active-section');
+                el.classList.add('hidden-section');
+            });
+
+            const target = document.getElementById(tabId);
+            target.classList.remove('hidden-section');
+            target.classList.add('active-section');
+
+            target.classList.remove('fade-in');
+            void target.offsetWidth; 
+            target.classList.add('fade-in');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-white/10', 'text-white', 'shadow-inner');
+                btn.classList.add('text-slate-300'); 
+                if (btn.id === 'btn-' + tabId) {
+                    btn.classList.add('bg-white/10', 'text-white', 'shadow-inner');
+                    btn.classList.remove('text-slate-300');
+                }
+            });
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initVoices(); // โหลดเสียงเริ่มต้น
+            
+            renderVocab('booking', 'vocab-booking');
+            renderVocab('checkin', 'vocab-checkin');
+            renderVocab('checkout', 'vocab-checkout');
+            renderFoundation();
+            
+            // สลับข้อสอบก่อน render
+            shuffleArray(quizQuestions);
+            renderQuiz();
+            
+            lucide.createIcons();
+            switchTab('dashboard');
+            
+            // Load saved student data
+            const savedData = JSON.parse(localStorage.getItem('studentData') || '{}');
+            if (savedData.fullName) {
+                document.getElementById('full-name').value = savedData.fullName;
+                document.getElementById('class-name').value = savedData.className;
+                document.getElementById('student-number').value = savedData.studentNumber;
+            }
+        });
+    </script>
+</body>
+</html>
